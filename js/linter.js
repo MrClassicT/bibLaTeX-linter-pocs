@@ -4,6 +4,7 @@
 const { exit } = require('process');
 const { readFromFile } = require('./helper/readFromFileAsync.js');
 const { checkForMissingFields } = require('./checks/missingfields.js');
+const { checkForDuplicates } = require('./checks/duplicates.js');
 const { entryPattern } = require('./components/regex.js');
 const { toFileUrl } = require('./helper/getFileUrl.js')
 
@@ -14,7 +15,6 @@ if (!filePath || filePath.trim() === "") {
     console.error('Error: Please provide a .bib filepath.');
     exit(1);
 }
-
 
 async function main() {
     let fileContent;
@@ -32,10 +32,14 @@ async function main() {
         position: match.index
     }));
 
+    // Check for duplicate keynames
+    checkForDuplicates(entries);
+
     // Check for missing fields:
     entries.forEach(entry => {
         const missingFields = checkForMissingFields(entry);
 
+        // Report the missing fields for this entry.
         if (missingFields.length > 0) {
             const lineNumber = fileContent.substring(0, entry.position).split('\n').length;
             const fileUrl = toFileUrl(filePath);
