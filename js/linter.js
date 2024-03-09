@@ -1,46 +1,50 @@
-"use strict"
-const fs = require('fs'); // File system, this is needed to import external files into the program.
+"use strict";
 
-// Get the filename from the command line arguments
-const fileName = process.argv[2];
+// Import submodules
+const { exit } = require('process');
+const { readFromFile } = require('./helper/readFromFileAsync.js');
+const { checkForMissingFields } = require('./checks/missingfields.js');
+const { entryPattern } = require('./components/regex.js');
+const { toFileUrl } = require('./helper/getFileUrl.js')
 
-let fileContent;
+// Get the filename from the command line arguments (also checks if one is actually present.)
+const filePath = process.argv[2];
 
-// Read the content of the file
-fs.readFile(fileName, 'utf8', (err, data) => {
-    if (err) {
-        console.error(err);
-        return;
-    }
-
-    fileContent = data;
-
-    extractEntry(fileContent);
-
-});
-
-
-
-function extractEntry(data) {
-    // Split the data into lines
-    const lines = data.split('\n');
-
-
-    // Iterate through the lines and extract the entry
-    let entry = '';
-    let inEntry = false;
-
-    for (const line of lines) {
-        if (line.startsWith('@Comment')) { /* Do nothing */ }
-        else if (line.startsWith('@')) {
-            entry += line + '\n';
-            inEntry = true;
-        } else if (inEntry) {
-            entry += line + '\n';
-        }
-    }
-
-    console.log(entry);
+if (!filePath || filePath.trim() === "") {
+    console.error('Error: Please provide a .bib filepath.');
+    exit(1);
 }
 
 
+async function main() {
+    let fileContent;
+    try {
+        fileContent = await readFromFile(filePath);
+    } catch (err) {
+        console.error('Error:', err);
+    }
+
+    // Extract all entries
+    const entries = [...fileContent.matchAll(entryPattern)].map(match => ({
+        type: match[1],
+        citationName: match[2].trim(),
+        content: match[3],
+        position: match.index
+    }));
+
+    // Check for missing fields:
+    entries.forEach(entry => {
+        const missingFields = checkForMissingFields(entry);
+
+        if (missingFields.length > 0) {
+            const lineNumber = fileContent.substring(0, entry.position).split('\n').length;
+            const fileUrl = toFileUrl(filePath);
+            console.log(`Anomaly detected in ${entry.type} entry "${entry.citationName}" at position ${entry.position}: Missing fields - ${missingFields.join(', ')}.\nAt -> ${fileUrl}:${lineNumber}`);
+
+        }
+    }
+    );
+
+}
+
+main();
