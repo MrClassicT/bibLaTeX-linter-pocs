@@ -1,11 +1,14 @@
+import time
 import sys
 import asyncio
 import re
 from helper.helper import read_from_file_async, to_file_url
 from checks.checks import check_for_missing_fields, check_for_duplicates
 from checks.components.entrytypes import get_requirements
-entry_requirements = get_requirements()
 
+start_time = time.perf_counter()
+
+entry_requirements = get_requirements()
 
 entry_pattern = re.compile(r'@(\w+)\{([^,]+),\s*(.*?)\}\n\n', re.DOTALL)
 field_pattern = re.compile(r'(\w+)\s*=\s*(?:\{(.*?)\}|(\S+))', re.DOTALL)
@@ -43,7 +46,10 @@ async def main():
             line_number = file_content[:entry['position']].count('\n') + 1
             file_url = to_file_url(file_path)
             print(f'Anomaly detected in {entry["type"]} entry "{entry["citationName"]}" at position {entry["position"]}: Missing fields - {", ".join(missing_fields)}.\nAt -> {file_url}:{line_number}')
-            
+    
+    end_time = time.perf_counter()  # End tracking time
+    execution_time = end_time - start_time
+    print(f"Execution time: {execution_time:.4f} seconds")
     exit(0)
 
 
