@@ -51,7 +51,6 @@ entryRequirements.Electronic = entryRequirements.Online;
 entryRequirements.Www = entryRequirements.Online;
 entryRequirements.Mastersthesis = entryRequirements.Thesis;
 entryRequirements.Phdthesis = entryRequirements.Thesis;
-entryRequirements.Conference = entryRequirements.Inproceedings;
 entryRequirements.Techreport = entryRequirements.Report;
 entryRequirements.Software = entryRequirements.Misc;
 entryRequirements.Inproceedings = entryRequirements.Conference;

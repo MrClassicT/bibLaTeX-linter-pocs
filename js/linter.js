@@ -1,5 +1,5 @@
 "use strict";
-
+console.time('execution');
 // Import submodules
 const { exit } = require('process');
 const { readFromFile } = require('./helper/readFromFileAsync.js');
@@ -32,6 +32,7 @@ async function main() {
         position: match.index
     }));
 
+
     // Check for duplicate keynames
     checkForDuplicates(entries);
 
@@ -48,7 +49,7 @@ async function main() {
         }
     }
     );
-
+    console.timeEnd('execution');
 }
 
 main();
