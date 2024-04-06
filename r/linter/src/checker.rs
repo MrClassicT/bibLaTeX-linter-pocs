@@ -1,69 +1,53 @@
-use crate::patterns::entry_pattern;
-use crate::patterns::field_pattern;
-// use crate::requirements::get_entry_requirements;
-// use std::collections::HashMap;
+pub mod checker {
+    // use std::collections::hash_map::Entry;
+    // use std::collections::HashMap;
 
-mod checker {
+    // use crate::patterns::patterns::{ENTRY_PATTERN, FIELD_PATTERN};
+    //use crate::requirements::get_entry_requirements;
 
-    pub fn check_for_missing_fields(entry: &str) -> Vec<&str> {
-        let mut fields: HashMap<&str, &str> = HashMap::new();
-        let mut missing_fields: Vec<&str> = Vec::new();
+    // pub fn check_for_missing_fields<'a>(
+    //     entry: &(&'a str, &'a str, &'a str, usize),
+    // ) -> Vec<&'a str> {
+    //     let mut fields: HashMap<&str, &str> = HashMap::new();
+    //     let mut missing_fields: Vec<&str> = Vec::new();
 
-        let field_pattern = patterns::field_pattern;
-        let required_fields = get_entry_requirements();
+    //     let field_pattern = FIELD_PATTERN;
+    //     let entry_pattern = ENTRY_PATTERN;
+    //     let entry_requirements = get_entry_requirements();
 
-        for field_match in field_pattern.captures_iter(entry) {
-            let field_name = field_match.get(1).unwrap().as_str();
-            let field_value = field_match
-                .get(2)
-                .map_or_else(|| field_match.get(3).unwrap().as_str(), |m| m.as_str());
-            fields.insert(field_name, field_value);
-        }
+    //     for field_match in field_pattern.captures_iter(entry.0) {
+    //         let field_name = field_match.get(1).unwrap().as_str();
+    //         let field_value = field_match
+    //             .get(2)
+    //             .map_or_else(|| field_match.get(3).unwrap().as_str(), |m| m.as_str());
+    //         fields.insert(field_name, field_value);
+    //     }
 
-        if let Some(required_fields) = entry_requirements.get(entry.r#type) {
-            for field in required_fields {
-                if !fields.contains_key(field) {
-                    missing_fields.push(field);
-                }
+    //     if let Some(required_fields) = entry_requirements.types.get(entry.0) {
+    //         for field in required_fields.required.iter() {
+    //             if !fields.contains_key(field) {
+    //                 missing_fields.push(field);
+    //             }
+    //         }
+    //     }
+
+    //     missing_fields // Return the missing_fields vector instead of printing the error message.
+    // }
+
+    pub fn check_for_duplicates<'a>(
+        entries: &[(&'a str, &'a str, &'a str, usize)],
+    ) -> Vec<(&'a str, usize)> {
+        let mut duplicates: Vec<(&str, usize)> = Vec::new();
+        let mut seen: Vec<&str> = Vec::new();
+
+        for entry in entries.iter() {
+            let citation_name = entry.1;
+            if seen.contains(&citation_name) {
+                duplicates.push((citation_name, entry.3));
+            } else {
+                seen.push(citation_name);
             }
         }
-
-        if !missing_fields.is_empty() {
-            let plural = missing_fields.len() > 1;
-            eprintln!(
-                "Caution: {}missing field{} {} ha{} been found!",
-                if plural { "" } else { "A " },
-                if plural { "s" } else { "" },
-                missing_fields.join(", "),
-                if plural { "ve" } else { "s" }
-            );
-        }
-    }
-
-    pub fn check_for_duplicates(entries: &[Entry]) {
-        let citation_names: Vec<&str> = entries.iter().map(|entry| entry.citation_name).collect();
-        let duplicates: Vec<&str> = citation_names
-            .iter()
-            .filter(|&citation_name| {
-                citation_names
-                    .iter()
-                    .position(|&name| name == citation_name)
-                    != citation_names
-                        .iter()
-                        .rposition(|&name| name == citation_name)
-            })
-            .cloned()
-            .collect();
-
-        if !duplicates.is_empty() {
-            let plural = duplicates.len() > 1;
-            eprintln!(
-                "Caution: {}duplicate key{} {} ha{} been found!",
-                if plural { "" } else { "A " },
-                if plural { "s" } else { "" },
-                duplicates.join(", "),
-                if plural { "ve" } else { "s" }
-            );
-        }
+        duplicates
     }
 }

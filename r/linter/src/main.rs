@@ -1,7 +1,6 @@
 mod checker;
 mod patterns;
 mod requirements;
-// use regex::Regex;
 use std::env;
 use std::fs;
 
@@ -15,28 +14,37 @@ fn main() {
     let file_path = &args[1];
     let file_content = fs::read_to_string(file_path).expect("Failed to read file");
 
-    // //println!("{}", file_content); // In orde, we kunnen de data goed inlezen.
-
-    // Regex patterns
-    // let entry_pattern = Regex::new(r"@(\w+)\{([^,]+),\s*(.*?)\}\n").unwrap();// <- This one was faulty, causing the app not to recognize any matches!
-
-    // Patterns have been moved to seperate file:
-    // let entry_pattern = Regex::new(r"(?is)@(\w+)\{([^,]+),\s*(.*?)\}\n").unwrap();
-    // let field_pattern = Regex::new(r"(\w+)\s*=\s*(?:\{(.*?)\}|(\S+))").unwrap();
+    let entry_pattern = &patterns::patterns::ENTRY_PATTERN;
 
     let entries: Vec<_> = entry_pattern
         .captures_iter(&file_content)
         .map(|cap| {
-            let entry_type = &cap[1];
-            let citation_name = cap[2].trim();
-            let content = &cap[3];
-            let position = cap.get(0).unwrap().start();
-            (entry_type, citation_name, content, position)
+            let entry_type = cap[1].to_owned();
+            let citation_name = cap[2].trim().to_owned();
+            let content = cap[3].to_owned();
+            let line_number = file_content[..cap.get(0).unwrap().start()].lines().count();
+            (entry_type, citation_name, content, line_number)
         })
         .collect();
 
-    checker::check_for_duplicates(&entries);
-    checker::check_for_missing_fields(&entries);
+    let duplicates = checker::checker::check_for_duplicates(
+        &entries
+            .iter()
+            .map(|(a, b, c, d)| (a.as_str(), b.as_str(), c.as_str(), *d))
+            .collect::<Vec<_>>(),
+    );
+
+    for duplicate in duplicates {
+        println!("All entry names should be unique.");
+        let (entry_name, zerobased_line_number) = duplicate;
+        let line_number = zerobased_line_number + 1;
+        println!(
+            "Duplicate field found in entry '{}' at line {}",
+            entry_name, line_number
+        );
+
+        println!("External file path: {}:{}", file_path, line_number);
+    }
 
     // println!(
     //     "Entry type: {}, Citation name: {}, \nContent: {}",
